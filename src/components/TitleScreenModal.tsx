@@ -105,6 +105,16 @@ export const TitleScreenModal: React.FC<TitleScreenModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-20 pointer-events-none flex flex-col justify-between p-2.5 md:p-5 overflow-y-auto">
+      {/* Return to Games Portal */}
+      <div className="pointer-events-auto max-w-4xl w-full mx-auto flex items-center justify-start mb-1">
+        <a
+          href="/"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sky-400/50 bg-slate-950/80 hover:bg-sky-950/90 text-sky-300 hover:text-white text-xs font-bold transition-all shadow-lg cursor-pointer"
+          title="Volver al portal de juegos"
+        >
+          ← Volver a Juegos
+        </a>
+      </div>
       {/* Top Hero Lockup & Daily Event Live Ticker over live 3D Sanctuary */}
       <div className="pointer-events-auto max-w-4xl w-full mx-auto text-center mt-0.5">
         <div className="inline-flex flex-wrap items-center justify-center gap-3 mb-1">

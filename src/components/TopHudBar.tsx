@@ -75,6 +75,13 @@ export const TopHudBar: React.FC<TopHudBarProps> = ({
       >
         {/* Left: Brand, Chapter & Map Name, Segmented Difficulty & Dynamic Weather Button */}
         <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="/"
+            className="px-2.5 py-1 rounded-lg border border-sky-500/50 bg-sky-950/70 hover:bg-sky-900/90 text-sky-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shadow-sm mr-1"
+            title="Volver al portal de juegos"
+          >
+            ← Volver a Juegos
+          </a>
           <span className="font-display text-sm md:text-base font-bold tracking-wider text-sky-400 whitespace-nowrap">
             AEGIS ARCANA
           </span>
