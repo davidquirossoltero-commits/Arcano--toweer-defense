@@ -2917,10 +2917,10 @@ function applyCosmeticMasterySkinToTowerModel(
 
     if (m instanceof THREE.MeshPhysicalMaterial && (m.transmission > 0 || m.transparent)) {
       // Translucent ice crystals, gems, and lenses: retain faceted refraction with soft inner glow
-      m.color.copy(primaryGlow).lerp(new THREE.Color(0xffffff), 0.35);
+      m.color.copy(primaryGlow);
       m.emissive.copy(primaryGlow);
-      m.emissiveIntensity = 0.16 + skinSpec.tier * 0.04;
-      m.roughness = 0.12;
+      m.emissiveIntensity = 0.12 + skinSpec.tier * 0.03;
+      m.roughness = 0.14;
       m.metalness = 0.08;
       m.clearcoat = 1.0;
     } else if (m instanceof THREE.MeshStandardMaterial) {
@@ -2929,7 +2929,7 @@ function applyCosmeticMasterySkinToTowerModel(
         const isBrightCore = m.color.r > 0.82 && m.color.g > 0.82 && m.color.b > 0.82;
         m.color.copy(isBrightCore ? secondaryGlow : primaryGlow);
         m.emissive.copy(isBrightCore ? secondaryGlow : primaryGlow);
-        m.emissiveIntensity = 0.40 + skinSpec.tier * 0.05;
+        m.emissiveIntensity = 0.28 + skinSpec.tier * 0.04;
         m.roughness = 0.22;
       } else if (m.metalness >= 0.58) {
         // Polished architectural metal trims, bands, and collars
@@ -2983,19 +2983,23 @@ function applyCosmeticMasterySkinToTowerModel(
   // BESPOKE 3D MASTERY REGALIA BY TIER (Unmistakable Silhouette Changes!)
   // ============================================================================
   const regaliaGlowMat = new THREE.MeshStandardMaterial({
-    color: secondaryGlow,
+    color: primaryGlow,
     emissive: primaryGlow,
-    emissiveIntensity: 0.42,
-    roughness: 0.15,
-    metalness: 0.25,
+    emissiveIntensity: 0.26,
+    roughness: 0.25,
+    metalness: 0.15,
+    transparent: true,
+    opacity: 0.82,
   });
 
   const regaliaSecondaryGlowMat = new THREE.MeshStandardMaterial({
-    color: primaryGlow,
-    emissive: secondaryGlow,
-    emissiveIntensity: 0.38,
-    roughness: 0.18,
-    metalness: 0.3,
+    color: secondaryGlow,
+    emissive: primaryGlow,
+    emissiveIntensity: 0.22,
+    roughness: 0.28,
+    metalness: 0.2,
+    transparent: true,
+    opacity: 0.82,
   });
 
   const regaliaMetalMat = new THREE.MeshPhysicalMaterial({
