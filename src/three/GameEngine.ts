@@ -650,7 +650,10 @@ export class GameEngine {
       const pos = this.gridToWorld(obs.col, obs.row);
       pos.y = getValleyTerrainHeightAt(found, pos.x, pos.z) - 0.03;
       model.position.copy(pos);
-      model.rotation.y = ((i % 3) - 1) * 0.28;
+      // Organic 360-degree natural orientation & subtle height/scale jitter per grove
+      model.rotation.y = (i * 2.39996) % (Math.PI * 2);
+      const scaleJitter = 0.92 + ((i * 7) % 5) * 0.045;
+      model.scale.set(scaleJitter, scaleJitter, scaleJitter);
       this.gridGroup.add(model);
     }
 
@@ -2874,11 +2877,20 @@ export class GameEngine {
       }
     }
 
-    // Billboard overhead 3D XP progress bars above each tower toward the camera
+    // Billboard overhead 3D XP progress bars above each tower toward the camera & animate idle tower magic
     this.towers.forEach((tower) => {
       const xpBarGroup = tower.mesh.userData.xpBarGroup as THREE.Group | undefined;
       if (xpBarGroup) {
         xpBarGroup.quaternion.copy(this.camera.quaternion);
+      }
+      const heartCrystal = tower.mesh.userData.heartCrystal as THREE.Group | undefined;
+      if (heartCrystal) {
+        heartCrystal.rotation.y += dt * 1.2;
+        heartCrystal.position.y = 1.12 + Math.sin(elapsed * 2.2 + tower.col) * 0.04;
+      }
+      const masteryRegalia = tower.mesh.userData.masteryRegalia as THREE.Group | undefined;
+      if (masteryRegalia) {
+        masteryRegalia.rotation.y += dt * 0.45;
       }
     });
 

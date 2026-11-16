@@ -5890,12 +5890,21 @@ let _runicTreeMaterials: {
   organicMossSoil: THREE.MeshStandardMaterial;
   ancientBronzeBark: THREE.MeshStandardMaterial;
   crimsonBark: THREE.MeshStandardMaterial;
+  silverBirchBark: THREE.MeshStandardMaterial;
   ashGrayFoliage: THREE.MeshStandardMaterial;
   voidPurpleDeepFoliage: THREE.MeshStandardMaterial;
   voidPurpleMidFoliage: THREE.MeshStandardMaterial;
   crimsonDeepFoliage: THREE.MeshStandardMaterial;
   crimsonBrightFoliage: THREE.MeshStandardMaterial;
   arcaneGoldFoliage: THREE.MeshStandardMaterial;
+  evergreenPineNeedle: THREE.MeshStandardMaterial;
+  frostTealFoliage: THREE.MeshStandardMaterial;
+  snowNeedleCap: THREE.MeshStandardMaterial;
+  runicMenhirMat: THREE.MeshStandardMaterial;
+  rubyGeodeMat: THREE.MeshStandardMaterial;
+  riverPebbleSlate: THREE.MeshStandardMaterial;
+  riverPebbleBasalt: THREE.MeshStandardMaterial;
+  lilyPadGreen: THREE.MeshStandardMaterial;
   goldenHeartGlow: THREE.MeshStandardMaterial;
   magentaRuneGlow: THREE.MeshStandardMaterial;
   voidPurpleCrystal: THREE.MeshStandardMaterial;
@@ -5947,6 +5956,13 @@ function getRunicTreeMaterials() {
       roughness: 0.76,
       metalness: 0.15,
     }),
+    silverBirchBark: new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      bumpMap: bumpTex,
+      bumpScale: 0.08,
+      roughness: 0.58,
+      metalness: 0.22,
+    }),
     ashGrayFoliage: new THREE.MeshStandardMaterial({
       color: 0x576366,
       bumpMap: bumpTex,
@@ -5995,9 +6011,65 @@ function getRunicTreeMaterials() {
       bumpMap: bumpTex,
       bumpScale: 0.06,
       emissive: 0xb45309,
-      emissiveIntensity: 0.55,
+      emissiveIntensity: 0.42,
       roughness: 0.52,
       metalness: 0.22,
+    }),
+    evergreenPineNeedle: new THREE.MeshStandardMaterial({
+      color: 0x0f766e,
+      bumpMap: bumpTex,
+      bumpScale: 0.06,
+      emissive: 0x042f2e,
+      emissiveIntensity: 0.12,
+      roughness: 0.72,
+    }),
+    frostTealFoliage: new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      bumpMap: bumpTex,
+      bumpScale: 0.06,
+      emissive: 0x0891b2,
+      emissiveIntensity: 0.22,
+      roughness: 0.65,
+    }),
+    snowNeedleCap: new THREE.MeshStandardMaterial({
+      color: 0xf1f5f9,
+      emissive: 0x000000,
+      emissiveIntensity: 0.0,
+      roughness: 0.88,
+    }),
+    runicMenhirMat: new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      bumpMap: bumpTex,
+      bumpScale: 0.12,
+      roughness: 0.82,
+      metalness: 0.18,
+    }),
+    rubyGeodeMat: new THREE.MeshStandardMaterial({
+      color: 0xf43f5e,
+      emissive: 0xe11d48,
+      emissiveIntensity: 0.32,
+      roughness: 0.18,
+      metalness: 0.2,
+    }),
+    riverPebbleSlate: new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      bumpMap: bumpTex,
+      bumpScale: 0.05,
+      roughness: 0.52,
+      metalness: 0.28,
+    }),
+    riverPebbleBasalt: new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      bumpMap: bumpTex,
+      bumpScale: 0.06,
+      roughness: 0.58,
+      metalness: 0.22,
+    }),
+    lilyPadGreen: new THREE.MeshStandardMaterial({
+      color: 0x15803d,
+      emissive: 0x14532d,
+      emissiveIntensity: 0.08,
+      roughness: 0.62,
     }),
     goldenHeartGlow: new THREE.MeshStandardMaterial({
       color: 0xfde047,
@@ -6062,10 +6134,7 @@ export function buildPineForestObstacleModel(variantSeed = 0): THREE.Group {
 
   const mats = getRunicTreeMaterials();
 
-  // ============================================================================
-  // 1. ORGANIC SUNKEN MOSSY EARTH & BOULDER ROOT-BED (Seamless Ground Integration)
-  // ============================================================================
-  // Low, natural mossy soil mound that sinks into the terrain (y = -0.06 to +0.08)
+  // Organic sunken mossy earth & boulder base that blends seamlessly into the ground
   const mossyRootBed = new THREE.Mesh(
     new THREE.DodecahedronGeometry(0.76, 1),
     mats.organicMossSoil
@@ -6075,366 +6144,312 @@ export function buildPineForestObstacleModel(variantSeed = 0): THREE.Group {
   mossyRootBed.receiveShadow = true;
   root.add(mossyRootBed);
 
-  // Irregular mossy earth & half-buried obsidian boulders around the trunk base so it blends naturally with the terrain
-  const soilClumps: Array<[number, number, number, number, number, boolean]> = [
-    [-0.58, -0.04, -0.18, 0.36, 0.28, true],
-    [0.54, -0.04, 0.26, 0.34, 0.26, true],
-    [0.18, -0.03, -0.52, 0.38, 0.24, false],
-    [-0.38, -0.03, 0.44, 0.32, 0.25, true],
-    [0.48, -0.04, -0.34, 0.29, 0.32, false],
-    [-0.64, -0.05, 0.16, 0.28, 0.3, false],
-  ];
-  soilClumps.forEach(([cx, cy, cz, r, sy, isMoss], idx) => {
-    const clump = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(r, 1),
-      isMoss ? mats.organicMossSoil : mats.obsidianStone
-    );
-    clump.scale.set(1.25, sy, 1.15);
-    clump.position.set(cx, cy, cz);
-    clump.rotation.set(idx * 0.3, idx * 0.9, idx * 0.2);
-    clump.receiveShadow = true;
-    clump.castShadow = true;
-    root.add(clump);
-  });
+  const archetype = Math.abs(variantSeed) % 3;
 
-  // ============================================================================
-  // 2. CENTER HERO TREE: ANCIENT RUNIC VOID-GOLD TREE (GRAN ÁRBOL RÚNICO)
-  // ============================================================================
-  const heroTree = new THREE.Group();
-  // Seated directly into the ground (y = -0.04) so the trunk & roots emerge organically from the earth
-  heroTree.position.set(0.02, -0.04, -0.04);
-  root.add(heroTree);
+  if (archetype === 0) {
+    // =========================================================================
+    // ARCHETYPE 0: GRAN ROBLE RÚNICO DEL VACÍO & MENHIR ANCESTRAL
+    // =========================================================================
+    const heroTree = new THREE.Group();
+    heroTree.position.set(0.02, -0.04, -0.04);
+    root.add(heroTree);
 
-  // Core twisted trunk column extending down into the soil (-0.15)
-  const coreTrunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.38, 1.32, 8),
-    mats.darkObsidianBark
-  );
-  coreTrunk.position.y = 0.54;
-  coreTrunk.castShadow = true;
-  coreTrunk.receiveShadow = true;
-  heroTree.add(coreTrunk);
-
-  // 8 Intertwined Gnarled Root-to-Bough Strands plunging deep into the earth (y = -0.22) and rising to the canopy
-  for (let s = 0; s < 8; s++) {
-    const baseAngle = (s / 8) * Math.PI * 2 + 0.2;
-    const midAngle = baseAngle + 0.52;
-    const topAngle = midAngle + 0.35;
-    const rootSpread = 0.84 + (s % 2) * 0.16;
-
-    // pSub plunges deep underground so even on sloped terrain the roots are anchored in the earth
-    const pSub = new THREE.Vector3(Math.cos(baseAngle) * (rootSpread + 0.12), -0.22, Math.sin(baseAngle) * (rootSpread + 0.12));
-    const p0 = new THREE.Vector3(Math.cos(baseAngle) * rootSpread, -0.02, Math.sin(baseAngle) * rootSpread);
-    const p1 = new THREE.Vector3(Math.cos(baseAngle + 0.18) * 0.38, 0.26, Math.sin(baseAngle + 0.18) * 0.38);
-    const p2 = new THREE.Vector3(Math.cos(midAngle) * 0.24, 0.68, Math.sin(midAngle) * 0.24);
-    const p3 = new THREE.Vector3(Math.cos(midAngle + 0.15) * 0.25, 1.08, Math.sin(midAngle + 0.15) * 0.25);
-    const p4 = new THREE.Vector3(Math.cos(topAngle) * 0.66, 1.48 + (s % 2) * 0.14, Math.sin(topAngle) * 0.64);
-
-    const strandCurve = new THREE.CatmullRomCurve3([pSub, p0, p1, p2, p3, p4]);
-    const strandMat = s % 2 === 0 ? mats.darkObsidianBark : mats.ancientBronzeBark;
-    const strandMesh = new THREE.Mesh(
-      new THREE.TubeGeometry(strandCurve, 14, 0.074, 6, false),
-      strandMat
-    );
-    strandMesh.castShadow = true;
-    strandMesh.receiveShadow = true;
-    heroTree.add(strandMesh);
-  }
-
-  // Two Diagonal Spiral Tracks of Glowing Violet-Magenta Runes carved into the twisted front trunk
-  for (let track = 0; track < 2; track++) {
-    const numRunes = 5;
-    for (let r = 0; r < numRunes; r++) {
-      const t = r / (numRunes - 1);
-      const rAngle = -0.35 + t * 0.85 + track * 0.38;
-      const ry = 0.32 + t * 0.68 + track * 0.08;
-      const rad = 0.275;
-
-      const runeGroup = new THREE.Group();
-      runeGroup.position.set(Math.sin(rAngle) * rad, ry, Math.cos(rAngle) * rad);
-      runeGroup.rotation.y = rAngle;
-
-      // Vertical rune stave + diagonal rune branch
-      const stave = new THREE.Mesh(
-        new THREE.BoxGeometry(0.022, 0.078, 0.018),
-        r % 2 === 0 ? mats.magentaRuneGlow : mats.voidPurpleCrystal
-      );
-      stave.rotation.z = -0.28;
-      runeGroup.add(stave);
-
-      const twig = new THREE.Mesh(
-        new THREE.BoxGeometry(0.052, 0.018, 0.02),
-        mats.magentaRuneGlow
-      );
-      twig.position.set(0.01, 0.012, 0.002);
-      twig.rotation.z = 0.45;
-      runeGroup.add(twig);
-
-      heroTree.add(runeGroup);
-    }
-  }
-
-  // Warm Golden-Amber Bioluminescent Hollow at the Root Base & Upper Branch Fork
-  const rootHollowGlow = new THREE.Mesh(
-    new THREE.SphereGeometry(0.18, 10, 8),
-    mats.goldenHeartGlow
-  );
-  rootHollowGlow.scale.set(1.2, 0.85, 0.9);
-  rootHollowGlow.position.set(0.12, 0.16, 0.22);
-  heroTree.add(rootHollowGlow);
-
-  const upperForkHeartGlow = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22, 10, 8),
-    mats.goldenHeartGlow
-  );
-  upperForkHeartGlow.position.set(0, 1.26, 0.06);
-  heroTree.add(upperForkHeartGlow);
-
-  // 7 Glowing Golden-Amber Bioluminescent Mushrooms nestled in the gnarled root hollows
-  const mushroomCoords: Array<[number, number, number, number]> = [
-    [0.18, 0.06, 0.36, 1.0],
-    [0.08, 0.04, 0.42, 0.78],
-    [0.26, 0.04, 0.32, 0.65],
-    [-0.28, 0.05, 0.28, 0.92],
-    [-0.36, 0.03, 0.34, 0.68],
-    [0.34, 0.04, -0.18, 0.82],
-    [-0.14, 0.08, 0.32, 0.72],
-  ];
-  mushroomCoords.forEach(([mx, my, mz, mScale]) => {
-    const mush = new THREE.Group();
-    mush.position.set(mx, my, mz);
-    mush.scale.setScalar(mScale);
-
-    const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.018, 0.026, 0.09, 6),
-      mats.ancientBronzeBark
-    );
-    stem.position.y = 0.045;
-    mush.add(stem);
-
-    const cap = new THREE.Mesh(
-      new THREE.SphereGeometry(0.055, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.62),
-      mats.goldenHeartGlow
-    );
-    cap.position.y = 0.08;
-    mush.add(cap);
-
-    heroTree.add(mush);
-  });
-
-  // Lush Multi-Layered Twilight Canopy (Void-Purple outer clouds, Crimson-Burgundy top crown, Golden-Amber sunlit inner foliage)
-  const canopyPuffs: Array<{
-    x: number;
-    y: number;
-    z: number;
-    r: number;
-    sx: number;
-    sy: number;
-    sz: number;
-    mat: THREE.Material;
-  }> = [
-    // Inner sunlit Arcane-Gold foliage clusters glowing above the branch forks
-    { x: 0.0, y: 1.44, z: 0.24, r: 0.36, sx: 1.25, sy: 0.78, sz: 1.1, mat: mats.arcaneGoldFoliage },
-    { x: -0.28, y: 1.48, z: 0.16, r: 0.32, sx: 1.2, sy: 0.75, sz: 1.05, mat: mats.arcaneGoldFoliage },
-    { x: 0.3, y: 1.46, z: 0.14, r: 0.32, sx: 1.2, sy: 0.75, sz: 1.05, mat: mats.arcaneGoldFoliage },
-    // Mid-tier Royal Void-Purple billowy canopy clouds
-    { x: -0.54, y: 1.56, z: 0.08, r: 0.42, sx: 1.28, sy: 0.82, sz: 1.15, mat: mats.voidPurpleMidFoliage },
-    { x: 0.54, y: 1.58, z: 0.06, r: 0.42, sx: 1.28, sy: 0.82, sz: 1.15, mat: mats.voidPurpleMidFoliage },
-    { x: -0.34, y: 1.68, z: -0.24, r: 0.44, sx: 1.3, sy: 0.85, sz: 1.2, mat: mats.voidPurpleDeepFoliage },
-    { x: 0.34, y: 1.66, z: -0.22, r: 0.44, sx: 1.3, sy: 0.85, sz: 1.2, mat: mats.voidPurpleDeepFoliage },
-    { x: 0.0, y: 1.72, z: 0.22, r: 0.44, sx: 1.32, sy: 0.84, sz: 1.18, mat: mats.voidPurpleMidFoliage },
-    { x: -0.22, y: 1.82, z: 0.04, r: 0.42, sx: 1.25, sy: 0.85, sz: 1.18, mat: mats.voidPurpleMidFoliage },
-    { x: 0.24, y: 1.8, z: 0.06, r: 0.42, sx: 1.25, sy: 0.85, sz: 1.18, mat: mats.voidPurpleDeepFoliage },
-    // Upper Crown Crimson-Burgundy & Twilight Plum crest foliage (matching the top of the centerpiece tree!)
-    { x: 0.0, y: 1.98, z: -0.02, r: 0.44, sx: 1.32, sy: 0.84, sz: 1.22, mat: mats.crimsonDeepFoliage },
-    { x: -0.18, y: 1.92, z: 0.14, r: 0.34, sx: 1.2, sy: 0.78, sz: 1.1, mat: mats.crimsonBrightFoliage },
-    { x: 0.2, y: 1.9, z: -0.12, r: 0.35, sx: 1.2, sy: 0.78, sz: 1.1, mat: mats.voidPurpleMidFoliage },
-  ];
-
-  canopyPuffs.forEach((p, idx) => {
-    const puff = new THREE.Mesh(new THREE.DodecahedronGeometry(p.r, 1), p.mat);
-    puff.position.set(p.x, p.y, p.z);
-    puff.scale.set(p.sx, p.sy, p.sz);
-    puff.rotation.set(idx * 0.4, idx * 0.7, idx * 0.25);
-    puff.castShadow = true;
-    puff.receiveShadow = true;
-    heroTree.add(puff);
-  });
-
-  // ============================================================================
-  // 3. LEFT COMPANION TREE: CRIMSON BLOODLEAF TREE & ASH-BARK BOUGH
-  // ============================================================================
-  const crimsonTree = new THREE.Group();
-  crimsonTree.position.set(-0.56, -0.04, -0.18);
-  crimsonTree.scale.setScalar(0.76);
-  root.add(crimsonTree);
-
-  const crimsonTrunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.15, 0.28, 1.12, 7),
-    mats.crimsonBark
-  );
-  crimsonTrunk.position.y = 0.42;
-  crimsonTrunk.rotation.z = 0.18;
-  crimsonTrunk.castShadow = true;
-  crimsonTree.add(crimsonTrunk);
-
-  // 4 Spreading Crimson Roots plunging into the ground
-  for (let cr = 0; cr < 4; cr++) {
-    const cAngle = (cr / 4) * Math.PI * 2 + 0.4;
-    const cRootCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0.22, 0),
-      new THREE.Vector3(Math.cos(cAngle) * 0.26, 0.04, Math.sin(cAngle) * 0.26),
-      new THREE.Vector3(Math.cos(cAngle + 0.15) * 0.46, -0.18, Math.sin(cAngle + 0.15) * 0.46),
-    ]);
-    const cRootMesh = new THREE.Mesh(
-      new THREE.TubeGeometry(cRootCurve, 6, 0.042, 5, false),
-      mats.crimsonBark
-    );
-    crimsonTree.add(cRootMesh);
-  }
-
-  const crimsonFoliageMat =
-    variantSeed % 3 === 1 ? mats.ashGrayFoliage : mats.crimsonDeepFoliage;
-  const crimsonHighlightMat =
-    variantSeed % 3 === 1 ? mats.voidPurpleMidFoliage : mats.crimsonBrightFoliage;
-
-  const sideCanopyOffsets: Array<[number, number, number, number, boolean]> = [
-    [-0.18, 1.02, 0.08, 0.38, true],
-    [0.14, 1.08, -0.08, 0.36, false],
-    [-0.04, 1.22, 0.0, 0.4, true],
-    [-0.28, 0.88, -0.06, 0.3, false],
-  ];
-  sideCanopyOffsets.forEach(([cx, cy, cz, cr, isBright]) => {
-    const cloud = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(cr, 1),
-      isBright ? crimsonHighlightMat : crimsonFoliageMat
-    );
-    cloud.position.set(cx, cy, cz);
-    cloud.scale.set(1.25, 0.82, 1.15);
-    cloud.castShadow = true;
-    cloud.receiveShadow = true;
-    crimsonTree.add(cloud);
-  });
-
-  // ============================================================================
-  // 4. RIGHT-FRONT COMPANION: SPECTRAL FROST-ROOT DEADWOOD (ÁRBOL DE ESCARCHA)
-  // ============================================================================
-  const frostTree = new THREE.Group();
-  frostTree.position.set(0.56, -0.04, 0.28);
-  frostTree.scale.setScalar(0.74);
-  root.add(frostTree);
-
-  // Lower dark bark transitioning into glowing ice-cyan trunk
-  const frostTrunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.09, 0.19, 0.82, 6),
-    mats.ancientBronzeBark
-  );
-  frostTrunk.position.y = 0.28;
-  frostTrunk.rotation.z = -0.14;
-  frostTrunk.castShadow = true;
-  frostTree.add(frostTrunk);
-
-  // 5 Spreading Bioluminescent Ice-Cyan Tendril Roots plunging deep into the earth
-  for (let r = 0; r < 5; r++) {
-    const rAngle = (r / 5) * Math.PI * 2 + 0.3;
-    const rootCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0, 0.24, 0),
-      new THREE.Vector3(Math.cos(rAngle) * 0.26, 0.06, Math.sin(rAngle) * 0.26),
-      new THREE.Vector3(Math.cos(rAngle + 0.2) * 0.52, -0.18, Math.sin(rAngle + 0.2) * 0.52),
-    ]);
-    const cyanRoot = new THREE.Mesh(
-      new THREE.TubeGeometry(rootCurve, 7, 0.035, 5, false),
-      mats.frostCyanGlow
-    );
-    frostTree.add(cyanRoot);
-  }
-
-  // 5 Bare Jagged Ice-Cyan Spectral Branches + Hanging Frost Icicles
-  for (let b = 0; b < 5; b++) {
-    const bAngle = (b / 5) * Math.PI * 2 + 0.4;
-    const branchCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.04, 0.58, 0),
-      new THREE.Vector3(Math.cos(bAngle) * 0.24, 0.88, Math.sin(bAngle) * 0.24),
-      new THREE.Vector3(Math.cos(bAngle - 0.18) * 0.44, 1.22 + (b % 2) * 0.12, Math.sin(bAngle - 0.18) * 0.44),
-    ]);
-    const cyanBranch = new THREE.Mesh(
-      new THREE.TubeGeometry(branchCurve, 7, 0.028, 5, false),
-      b % 2 === 0 ? mats.frostCyanGlow : mats.frostIceTip
-    );
-    frostTree.add(cyanBranch);
-
-    // Hanging crystalline icicle from the spectral branch
-    if (b % 2 === 0) {
-      const icicle = new THREE.Mesh(
-        new THREE.ConeGeometry(0.026, 0.18, 4),
-        mats.frostIceTip
-      );
-      icicle.rotation.x = Math.PI;
-      icicle.position.set(
-        Math.cos(bAngle) * 0.32,
-        0.86,
-        Math.sin(bAngle) * 0.32
-      );
-      frostTree.add(icicle);
-    }
-  }
-
-  // ============================================================================
-  // 5. FOREGROUND DEADWOOD SAPLING, VOID CRYSTALS & FLOATING VOID WISPS
-  // ============================================================================
-  // Foreground gnarled dark-obsidian sapling with purple crystal shards emerging from the soil
-  [-0.36, 0.38].forEach((xPos, idx) => {
-    const crystal = new THREE.Mesh(
-      new THREE.ConeGeometry(0.085, 0.34 + idx * 0.08, 5),
-      idx === 0 ? mats.voidPurpleCrystal : mats.magentaRuneGlow
-    );
-    crystal.position.set(xPos, 0.08, 0.54 - idx * 0.12);
-    crystal.rotation.z = idx === 0 ? 0.24 : -0.28;
-    root.add(crystal);
-  });
-
-  // 3 Floating Dark-Obsidian Void Wisp Orbs with Purple Flame Auras & Glowing Eyes hovering in the branches
-  const wispCoords: Array<[number, number, number, number]> = [
-    [-0.58, 1.54, 0.24, 0.095],
-    [0.54, 1.62, -0.14, 0.09],
-    [0.42, 0.96, 0.32, 0.078],
-  ];
-  wispCoords.forEach(([wx, wy, wz, wr]) => {
-    const wisp = new THREE.Group();
-    wisp.position.set(wx, wy, wz);
-
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(wr, 10, 8),
+    // Core twisted trunk column
+    const coreTrunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.42, 1.38, 8),
       mats.darkObsidianBark
     );
-    wisp.add(core);
+    coreTrunk.position.y = 0.56;
+    coreTrunk.castShadow = true;
+    coreTrunk.receiveShadow = true;
+    heroTree.add(coreTrunk);
 
-    const aura = new THREE.Mesh(
-      new THREE.ConeGeometry(wr * 1.38, wr * 2.8, 8),
-      mats.wispAuraMat
-    );
-    aura.position.y = wr * 0.28;
-    wisp.add(aura);
+    // 8 Gnarled Root-to-Bough Strands plunging into the soil
+    for (let s = 0; s < 8; s++) {
+      const baseAngle = (s / 8) * Math.PI * 2 + 0.2;
+      const midAngle = baseAngle + 0.52;
+      const topAngle = midAngle + 0.35;
+      const rootSpread = 0.84 + (s % 2) * 0.16;
 
-    // Pair of glowing violet-white eyes facing outward/camera
-    [-0.028, 0.028].forEach((ex) => {
-      const eye = new THREE.Mesh(
-        new THREE.BoxGeometry(0.022, 0.02, 0.022),
-        mats.wispEyeMat
+      const pSub = new THREE.Vector3(Math.cos(baseAngle) * (rootSpread + 0.12), -0.22, Math.sin(baseAngle) * (rootSpread + 0.12));
+      const p0 = new THREE.Vector3(Math.cos(baseAngle) * rootSpread, -0.02, Math.sin(baseAngle) * rootSpread);
+      const p1 = new THREE.Vector3(Math.cos(baseAngle + 0.18) * 0.38, 0.26, Math.sin(baseAngle + 0.18) * 0.38);
+      const p2 = new THREE.Vector3(Math.cos(midAngle) * 0.24, 0.68, Math.sin(midAngle) * 0.24);
+      const p3 = new THREE.Vector3(Math.cos(midAngle + 0.15) * 0.25, 1.08, Math.sin(midAngle + 0.15) * 0.25);
+      const p4 = new THREE.Vector3(Math.cos(topAngle) * 0.66, 1.48 + (s % 2) * 0.14, Math.sin(topAngle) * 0.66);
+
+      const strandCurve = new THREE.CatmullRomCurve3([pSub, p0, p1, p2, p3, p4]);
+      const strandMat = s % 2 === 0 ? mats.darkObsidianBark : mats.ancientBronzeBark;
+      const strandMesh = new THREE.Mesh(
+        new THREE.TubeGeometry(strandCurve, 12, 0.076, 6, false),
+        strandMat
       );
-      eye.position.set(ex, 0.01, wr * 0.88);
-      wisp.add(eye);
+      strandMesh.castShadow = true;
+      strandMesh.receiveShadow = true;
+      heroTree.add(strandMesh);
+    }
+
+    // Glowing Violet Runes carved up the trunk
+    for (let r = 0; r < 5; r++) {
+      const t = r / 4;
+      const rAngle = -0.3 + t * 0.8;
+      const ry = 0.34 + t * 0.65;
+      const stave = new THREE.Mesh(
+        new THREE.BoxGeometry(0.022, 0.08, 0.018),
+        r % 2 === 0 ? mats.magentaRuneGlow : mats.voidPurpleCrystal
+      );
+      stave.position.set(Math.sin(rAngle) * 0.28, ry, Math.cos(rAngle) * 0.28);
+      stave.rotation.y = rAngle;
+      stave.rotation.z = -0.25;
+      heroTree.add(stave);
+    }
+
+    // Warm Amber Hollow & Bioluminescent Mushrooms
+    const hollowGlow = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), mats.goldenHeartGlow);
+    hollowGlow.scale.set(1.1, 0.85, 0.9);
+    hollowGlow.position.set(0.12, 0.16, 0.22);
+    heroTree.add(hollowGlow);
+
+    [
+      [0.18, 0.05, 0.36, 1.0],
+      [0.08, 0.04, 0.42, 0.78],
+      [-0.26, 0.05, 0.26, 0.85],
+    ].forEach(([mx, my, mz, sc]) => {
+      const mush = new THREE.Group();
+      mush.position.set(mx, my, mz);
+      mush.scale.setScalar(sc);
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.026, 0.08, 6), mats.ancientBronzeBark);
+      stem.position.y = 0.04;
+      mush.add(stem);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.62), mats.goldenHeartGlow);
+      cap.position.y = 0.08;
+      mush.add(cap);
+      heroTree.add(mush);
     });
 
-    root.add(wisp);
-  });
+    // 3-Tier Canopy (Gold + Royal Purple + Deep Crimson Crest)
+    const oakCanopy: Array<{ x: number; y: number; z: number; r: number; sx: number; sy: number; sz: number; mat: THREE.Material }> = [
+      { x: 0.0, y: 1.48, z: 0.2, r: 0.38, sx: 1.25, sy: 0.78, sz: 1.1, mat: mats.arcaneGoldFoliage },
+      { x: -0.28, y: 1.52, z: 0.12, r: 0.34, sx: 1.2, sy: 0.75, sz: 1.05, mat: mats.arcaneGoldFoliage },
+      { x: 0.3, y: 1.5, z: 0.1, r: 0.34, sx: 1.2, sy: 0.75, sz: 1.05, mat: mats.arcaneGoldFoliage },
+      { x: -0.48, y: 1.62, z: 0.06, r: 0.44, sx: 1.28, sy: 0.82, sz: 1.15, mat: mats.voidPurpleMidFoliage },
+      { x: 0.48, y: 1.64, z: 0.04, r: 0.44, sx: 1.28, sy: 0.82, sz: 1.15, mat: mats.voidPurpleMidFoliage },
+      { x: 0.0, y: 1.76, z: 0.18, r: 0.46, sx: 1.32, sy: 0.84, sz: 1.18, mat: mats.voidPurpleMidFoliage },
+      { x: 0.0, y: 2.02, z: -0.02, r: 0.46, sx: 1.32, sy: 0.84, sz: 1.22, mat: mats.crimsonDeepFoliage },
+      { x: -0.2, y: 1.95, z: 0.12, r: 0.36, sx: 1.2, sy: 0.78, sz: 1.1, mat: mats.crimsonBrightFoliage },
+    ];
+    oakCanopy.forEach((p, idx) => {
+      const puff = new THREE.Mesh(new THREE.DodecahedronGeometry(p.r, 1), p.mat);
+      puff.position.set(p.x, p.y, p.z);
+      puff.scale.set(p.sx, p.sy, p.sz);
+      puff.rotation.set(idx * 0.4, idx * 0.7, idx * 0.25);
+      puff.castShadow = true;
+      puff.receiveShadow = true;
+      heroTree.add(puff);
+    });
+
+    // Ancient Carved Runic Menhir (Standing Stone) beside the roots
+    const menhir = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.22, 0.88, 5), mats.runicMenhirMat);
+    menhir.position.set(-0.62, 0.38, 0.28);
+    menhir.rotation.set(0.12, 0.45, -0.15);
+    menhir.castShadow = true;
+    root.add(menhir);
+
+    const menhirRune = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.24, 0.06), mats.voidPurpleCrystal);
+    menhirRune.position.set(-0.52, 0.42, 0.34);
+    menhirRune.rotation.set(0.12, 0.45, -0.15);
+    root.add(menhirRune);
+
+  } else if (archetype === 1) {
+    // =========================================================================
+    // ARCHETYPE 1: PINAR GLACIAL DE ESCARCHA & CRISTALES DE HIELO
+    // =========================================================================
+    const pineConfigs = [
+      { x: 0.0, z: -0.06, scale: 1.15, tiers: 5, tiltZ: 0.02, tiltX: -0.03 },
+      { x: 0.46, z: 0.22, scale: 0.88, tiers: 4, tiltZ: -0.12, tiltX: 0.08 },
+      { x: -0.44, z: 0.26, scale: 0.72, tiers: 3, tiltZ: 0.14, tiltX: 0.05 },
+    ];
+
+    pineConfigs.forEach((cfg) => {
+      const pineGroup = new THREE.Group();
+      pineGroup.position.set(cfg.x, -0.04, cfg.z);
+      pineGroup.scale.setScalar(cfg.scale);
+      pineGroup.rotation.set(cfg.tiltX, 0, cfg.tiltZ);
+
+      // Silver-birch pine trunk
+      const trunkH = 0.55 + cfg.tiers * 0.32;
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.16, trunkH, 7),
+        mats.silverBirchBark
+      );
+      trunk.position.y = trunkH * 0.48;
+      trunk.castShadow = true;
+      pineGroup.add(trunk);
+
+      // Conical needle tiers cascading upward
+      for (let t = 0; t < cfg.tiers; t++) {
+        const tierY = 0.45 + t * 0.32;
+        const tierR = (cfg.tiers - t) * 0.14 + 0.18;
+        const tierH = 0.48 - t * 0.04;
+
+        // Needle cone body (deep evergreen teal)
+        const cone = new THREE.Mesh(
+          new THREE.ConeGeometry(tierR, tierH, 7),
+          t % 2 === 0 ? mats.evergreenPineNeedle : mats.frostTealFoliage
+        );
+        cone.position.y = tierY + tierH * 0.5;
+        cone.castShadow = true;
+        cone.receiveShadow = true;
+        pineGroup.add(cone);
+
+        // Snow / frost tip ring on the tier skirt
+        const snowRim = new THREE.Mesh(
+          new THREE.TorusGeometry(tierR * 0.95, 0.025, 5, 8),
+          mats.snowNeedleCap
+        );
+        snowRim.rotation.x = Math.PI / 2;
+        snowRim.position.y = tierY + 0.04;
+        pineGroup.add(snowRim);
+
+        // Small icicles on lower tiers
+        if (t < 2) {
+          for (let ic = 0; ic < 4; ic++) {
+            const icAngle = (ic / 4) * Math.PI * 2 + t * 0.8;
+            const icicle = new THREE.Mesh(
+              new THREE.ConeGeometry(0.022, 0.12, 4),
+              mats.frostIceTip
+            );
+            icicle.position.set(Math.cos(icAngle) * (tierR * 0.85), tierY - 0.02, Math.sin(icAngle) * (tierR * 0.85));
+            icicle.rotation.x = Math.PI;
+            pineGroup.add(icicle);
+          }
+        }
+      }
+
+      // Spire tip crystal atop the pine
+      const apexTip = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), mats.frostIceTip);
+      apexTip.scale.set(0.65, 1.8, 0.65);
+      apexTip.position.y = 0.5 + cfg.tiers * 0.32 + 0.22;
+      pineGroup.add(apexTip);
+
+      root.add(pineGroup);
+    });
+
+    // Cluster of Raw Frost Crystals erupting from the mossy base
+    for (let c = 0; c < 5; c++) {
+      const cAngle = (c / 5) * Math.PI * 2 + 0.4;
+      const cDist = 0.32 + (c % 2) * 0.14;
+      const crystal = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.08 + (c % 3) * 0.03, 0),
+        c % 2 === 0 ? mats.frostIceTip : mats.frostCyanGlow
+      );
+      crystal.scale.set(0.7, 1.9, 0.7);
+      crystal.position.set(Math.cos(cAngle) * cDist, 0.12, Math.sin(cAngle) * cDist);
+      crystal.rotation.set(-0.2 + (c % 2) * 0.4, c * 0.8, 0.25);
+      crystal.castShadow = true;
+      root.add(crystal);
+    }
+
+  } else {
+    // =========================================================================
+    // ARCHETYPE 2: SAUCE CARMESÍ DE SANGRE & GEODA DE RUBÍ
+    // =========================================================================
+    const mainWillow = new THREE.Group();
+    mainWillow.position.set(0.08, -0.04, -0.08);
+    root.add(mainWillow);
+
+    // Gnarled, organically leaning crimson trunk
+    const willowTrunkCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.0, -0.15, 0.0),
+      new THREE.Vector3(0.08, 0.35, -0.06),
+      new THREE.Vector3(-0.14, 0.82, 0.04),
+      new THREE.Vector3(-0.32, 1.28, 0.12),
+    ]);
+    const willowTrunk = new THREE.Mesh(
+      new THREE.TubeGeometry(willowTrunkCurve, 12, 0.16, 7, false),
+      mats.crimsonBark
+    );
+    willowTrunk.castShadow = true;
+    mainWillow.add(willowTrunk);
+
+    // 3 Spreading Boughs
+    [
+      new THREE.Vector3(-0.55, 1.55, 0.35),
+      new THREE.Vector3(0.38, 1.48, -0.28),
+      new THREE.Vector3(-0.18, 1.62, -0.42),
+    ].forEach((endPt) => {
+      const boughCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.32, 1.28, 0.12),
+        new THREE.Vector3(endPt.x * 0.5, endPt.y * 0.75, endPt.z * 0.5),
+        endPt,
+      ]);
+      const boughMesh = new THREE.Mesh(
+        new THREE.TubeGeometry(boughCurve, 8, 0.068, 6, false),
+        mats.crimsonBark
+      );
+      mainWillow.add(boughMesh);
+    });
+
+    // Cascading Ruby / Wine Foliage Clouds
+    const willowClouds: Array<[number, number, number, number, boolean]> = [
+      [-0.58, 1.62, 0.38, 0.44, true],
+      [0.42, 1.54, -0.28, 0.42, false],
+      [-0.18, 1.72, -0.44, 0.40, true],
+      [-0.32, 1.88, 0.08, 0.46, false],
+      [-0.68, 1.35, 0.45, 0.34, true],
+      [0.52, 1.28, -0.32, 0.32, false],
+      [-0.08, 1.95, -0.15, 0.38, true],
+    ];
+    willowClouds.forEach(([wx, wy, wz, wr, isBright]) => {
+      const puff = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(wr, 1),
+        isBright ? mats.crimsonBrightFoliage : mats.crimsonDeepFoliage
+      );
+      puff.position.set(wx, wy, wz);
+      puff.scale.set(1.22, 0.88, 1.15);
+      puff.castShadow = true;
+      puff.receiveShadow = true;
+      mainWillow.add(puff);
+    });
+
+    // Secondary Leaning Companion Sapling
+    const companionWillow = new THREE.Group();
+    companionWillow.position.set(-0.48, -0.04, 0.32);
+    companionWillow.scale.setScalar(0.68);
+    companionWillow.rotation.set(-0.15, 0.4, 0.22);
+    const compTrunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.15, 1.1, 6),
+      mats.crimsonBark
+    );
+    compTrunk.position.y = 0.55;
+    compTrunk.castShadow = true;
+    companionWillow.add(compTrunk);
+
+    const compPuff = new THREE.Mesh(new THREE.DodecahedronGeometry(0.38, 1), mats.crimsonBrightFoliage);
+    compPuff.position.set(0.05, 1.15, 0.0);
+    compPuff.scale.set(1.2, 0.8, 1.1);
+    companionWillow.add(compPuff);
+    root.add(companionWillow);
+
+    // Exposed Raw Ruby Geode / Crystal Cluster at base
+    const geodeRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.24, 0), mats.obsidianStone);
+    geodeRock.position.set(0.44, 0.1, 0.28);
+    geodeRock.scale.set(1.3, 0.7, 1.1);
+    root.add(geodeRock);
+
+    for (let g = 0; g < 4; g++) {
+      const gAngle = (g / 4) * Math.PI * 2;
+      const rubyShard = new THREE.Mesh(new THREE.OctahedronGeometry(0.075 + (g % 2) * 0.02, 0), mats.rubyGeodeMat);
+      rubyShard.scale.set(0.65, 1.8, 0.65);
+      rubyShard.position.set(0.44 + Math.cos(gAngle) * 0.12, 0.18 + (g % 2) * 0.06, 0.28 + Math.sin(gAngle) * 0.12);
+      rubyShard.rotation.set(0.3, g * 1.1, -0.2);
+      root.add(rubyShard);
+    }
+  }
 
   return root;
 }
 
-/**
- * Builds the Northern Spawn Portal using the Void Spawn Portal design.
- */
 export function buildForestPassSpawnModel(): THREE.Group {
   return buildVoidSpawnPortalModel();
 }
@@ -7936,6 +7951,35 @@ function createRiverWaterTexturesPair(
     waterMesh.position.set(riverWorldX, -0.16, -3.5);
     waterMesh.receiveShadow = true;
     group.add(waterMesh);
+
+    // Scatter smooth riverbank pebbles and water lily pads along the winding river
+    const pebbleGeo = new THREE.DodecahedronGeometry(0.14, 1);
+    const lilyGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.015, 8);
+    const treeMats = getRunicTreeMaterials();
+    const numPebbles = 24;
+    for (let p = 0; p < numPebbles; p++) {
+      const pZ = ((p / (numPebbles - 1)) - 0.5) * (worldDepth * 0.85);
+      const bankSide = p % 2 === 0 ? -1.65 : 1.65;
+      const meander = Math.sin((pZ / worldDepth) * Math.PI * 2.5 - 0.6) * 0.45;
+      const pebble = new THREE.Mesh(
+        pebbleGeo,
+        p % 3 === 0 ? treeMats.riverPebbleSlate : treeMats.riverPebbleBasalt
+      );
+      const pScale = 0.65 + ((p * 7) % 5) * 0.15;
+      pebble.scale.set(pScale * 1.3, pScale * 0.6, pScale * 1.1);
+      pebble.position.set(riverWorldX + meander + bankSide + ((p % 3) - 1) * 0.25, -0.06, pZ);
+      pebble.rotation.set((p * 0.5) % Math.PI, (p * 1.2) % Math.PI, 0);
+      pebble.receiveShadow = true;
+      group.add(pebble);
+
+      // Water lilies near calmer bank pools (avoiding the central bridge at z ~ 0)
+      if (p % 4 === 1 && Math.abs(pZ) > 3.0) {
+        const lily = new THREE.Mesh(lilyGeo, treeMats.lilyPadGreen);
+        lily.position.set(riverWorldX + meander + (bankSide * 0.55), -0.145, pZ + 0.2);
+        lily.rotation.y = (p * 1.7) % (Math.PI * 2);
+        group.add(lily);
+      }
+    }
   }
 
   return group;
