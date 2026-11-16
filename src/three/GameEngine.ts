@@ -205,6 +205,7 @@ export class GameEngine {
   private floatingTextSystem: FloatingTextSystem;
   private hemiLight: THREE.HemisphereLight | null = null;
   private keyLight: THREE.DirectionalLight | null = null;
+  private riverWaterMesh: THREE.Mesh | null = null;
   private autoWeatherTimer: number = 26.0;
 
   // Wave Spawning Queue
@@ -569,8 +570,13 @@ export class GameEngine {
     this.gridGroup.add(backdropGroup);
 
     // 2. Build Seamless Sculpted 3D Valley Terrain & Painted 2048x2048 Diorama Map (No square grid!)
+    this.riverWaterMesh = null;
     const terrainGroup = buildSculptedValleyTerrainMesh(found, maxAniso);
     this.gridGroup.add(terrainGroup);
+    const rMesh = terrainGroup.getObjectByName('riverWaterMesh');
+    if (rMesh instanceof THREE.Mesh) {
+      this.riverWaterMesh = rMesh;
+    }
 
     // 3. Render Arched Stone Bridge over the Winding Valley River
     if (found.riverCol !== undefined && found.bridgeRow !== undefined) {
@@ -2716,6 +2722,16 @@ export class GameEngine {
 
   private updateVisualEffects(dt: number) {
     const elapsed = this.clock.elapsedTime;
+
+    if (this.riverWaterMesh) {
+      const mat = this.riverWaterMesh.material as THREE.MeshPhysicalMaterial;
+      if (mat && mat.map) {
+        mat.map.offset.y -= dt * 0.08;
+      }
+      if (mat && mat.bumpMap) {
+        mat.bumpMap.offset.y -= dt * 0.12;
+      }
+    }
     for (const portal of this.portalsAndCore) {
       const crystal = portal.userData.coreCrystal as THREE.Mesh | undefined;
       const ring = portal.userData.ring as THREE.Mesh | undefined;

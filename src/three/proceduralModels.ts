@@ -7405,8 +7405,8 @@ function createValleyTerrainTexturesPair(
   worldDepth: number,
   maxAnisotropy: number
 ): { albedoTex: THREE.CanvasTexture; bumpTex: THREE.CanvasTexture } {
-  const cacheKeyAlbedo = `terrain_albedo_v4_${mapConfig.id}_${maxAnisotropy}`;
-  const cacheKeyBump = `terrain_bump_v4_${mapConfig.id}_${maxAnisotropy}`;
+  const cacheKeyAlbedo = `terrain_albedo_v5_${mapConfig.id}_${maxAnisotropy}`;
+  const cacheKeyBump = `terrain_bump_v5_${mapConfig.id}_${maxAnisotropy}`;
   if (textureCache.has(cacheKeyAlbedo) && textureCache.has(cacheKeyBump)) {
     return {
       albedoTex: textureCache.get(cacheKeyAlbedo)!,
@@ -7456,16 +7456,17 @@ function createValleyTerrainTexturesPair(
   const spawnPoints = mapConfig.spawns.map((s) => gridToWorldXZ(s.col, s.row));
   const goalPoint = gridToWorldXZ(mapConfig.goal.col, mapConfig.goal.row);
   const obstaclePoints = mapConfig.obstacles.map((o) => gridToWorldXZ(o.col, o.row));
+  const pedestalPoints = (mapConfig.pedestals || []).map((p) => gridToWorldXZ(p.col, p.row));
   const riverWorldX =
     mapConfig.riverCol !== undefined ? gridToWorldXZ(mapConfig.riverCol, 5)[0] : null;
 
-  // High-contrast dark-fantasy palette for crisp, hand-crafted stone and mossy earth
-  const meadowA = isDefaultCastleValley ? [52, 86, 48] : hexToRgb(mapConfig.theme.tileColorA);
-  const meadowB = isDefaultCastleValley ? [24, 44, 29] : hexToRgb(mapConfig.theme.tileColorB);
-  const forestHumus = [26, 20, 34];
-  const cliffRock = isDefaultCastleValley ? [68, 62, 82] : hexToRgb(mapConfig.theme.obstacleColor);
-  const roadStoneA = isDefaultCastleValley ? [96, 88, 108] : hexToRgb(mapConfig.theme.pathColor);
-  const roadStoneB = [44, 38, 56];
+  // Lush stylized fantasy meadow palette
+  const meadowA = isDefaultCastleValley ? [62, 126, 68] : hexToRgb(mapConfig.theme.tileColorA);
+  const meadowB = isDefaultCastleValley ? [34, 76, 42] : hexToRgb(mapConfig.theme.tileColorB);
+  const forestHumus = [38, 28, 24];
+  const cliffRock = isDefaultCastleValley ? [88, 84, 104] : hexToRgb(mapConfig.theme.obstacleColor);
+  const roadStoneA = isDefaultCastleValley ? [124, 118, 142] : hexToRgb(mapConfig.theme.pathColor);
+  const roadStoneB = [56, 50, 68];
   const leyGold = [250, 204, 21];
   const voidViolet = [192, 132, 252];
 
@@ -7506,6 +7507,16 @@ function createValleyTerrainTexturesPair(
       }
       const roadDist = Math.sqrt(minRoadDistSq);
 
+      // Distance to nearest pedestal
+      let minPedDistSq = 9999;
+      for (let p = 0; p < pedestalPoints.length; p++) {
+        const dx = wx - pedestalPoints[p][0];
+        const dz = wz - pedestalPoints[p][1];
+        const dSq = dx * dx + dz * dz;
+        if (dSq < minPedDistSq) minPedDistSq = dSq;
+      }
+      const pedDist = Math.sqrt(minPedDistSq);
+
       // 3. Distance to Void Portals & Castle Citadel for glowing ley-line fractures
       let minPortalDist = Math.hypot(wx - goalPoint[0], wz - goalPoint[1]);
       for (let s = 0; s < spawnPoints.length; s++) {
@@ -7520,50 +7531,66 @@ function createValleyTerrainTexturesPair(
         if (td < minTreeDist) minTreeDist = td;
       }
 
-      // 5. Base biome shading (lush multi-toned mossy dark-fantasy terrace vs carved stone slabs)
+      // 5. Base biome shading: Soft, lush stylized dark-fantasy meadow (no cobblestone grid on grass!)
       const dxOut = Math.max(0, Math.abs(wx) - playHalfW + 0.6);
       const dzOut = Math.max(0, Math.abs(wz) - playHalfD + 0.6);
       const cliffFactor = Math.min(1, Math.hypot(dxOut, dzOut) * 0.35);
 
-      const mossMix = Math.min(1, Math.max(0, fbmMacro * 0.65 + fbmMicro * 0.35));
-      const grassBlade = (fbmFine - 0.5) * 26;
-      let r = meadowB[0] * (1 - mossMix) + meadowA[0] * mossMix + grassBlade * 0.7;
-      let g = meadowB[1] * (1 - mossMix) + meadowA[1] * mossMix + grassBlade;
-      let b = meadowB[2] * (1 - mossMix) + meadowA[2] * mossMix + grassBlade * 0.5;
-      let bumpHeight = 0.32 + fbmMicro * 0.34 + fbmFine * 0.14 + stoneBlockBevel * 0.2;
+      const mossMix = Math.min(1, Math.max(0, fbmMacro * 0.6 + fbmMicro * 0.4));
+      const grassBlade = (fbmFine - 0.5) * 20;
+      const sunKiss = Math.max(0, Math.sin(wx * 0.28 + wz * 0.24) * 0.5 + 0.5);
 
-      // Blend chiseled ancient terrace flagstones with deep mortar AO into buildable ground
-      const terraceSlabMask =
-        (1 - cliffFactor) * (0.42 + 0.22 * Math.sin(wx * 0.65 + wz * 0.55));
+      let r = meadowB[0] * (1 - mossMix) + meadowA[0] * mossMix + grassBlade * 0.6 + sunKiss * 14;
+      let g = meadowB[1] * (1 - mossMix) + meadowA[1] * mossMix + grassBlade + sunKiss * 20;
+      let b = meadowB[2] * (1 - mossMix) + meadowA[2] * mossMix + grassBlade * 0.4 + sunKiss * 10;
+      let bumpHeight = 0.42 + fbmMicro * 0.32 + fbmFine * 0.18;
+
+      // Subtle mystical wildflower and clover florets in open grass areas
+      if (fbmFine > 0.66 && vCell > 0.80 && minTreeDist > 1.3 && roadDist > 1.4 && cliffFactor < 0.05) {
+        const isGoldenFloret = vCell > 0.90;
+        const floretR = isGoldenFloret ? 245 : 130;
+        const floretG = isGoldenFloret ? 210 : 215;
+        const floretB = isGoldenFloret ? 70 : 255;
+        r = r * 0.25 + floretR * 0.75;
+        g = g * 0.25 + floretG * 0.75;
+        b = b * 0.25 + floretB * 0.75;
+        bumpHeight += 0.12;
+      }
+
       const mortarAO = 0.22 + 0.78 * stoneMortarGap;
-      const slabShade =
-        mortarAO * (0.55 + stoneBlockBevel * 0.58) * (0.84 + (vCell - 0.5) * 0.32);
-      r = r * (1 - terraceSlabMask) + cliffRock[0] * slabShade * terraceSlabMask;
-      g = g * (1 - terraceSlabMask) + cliffRock[1] * slabShade * terraceSlabMask;
-      b = b * (1 - terraceSlabMask) + cliffRock[2] * slabShade * terraceSlabMask;
 
-      // Organic root-bed soil & bioluminescent root veins directly underneath tree groves!
-      if (minTreeDist < 1.55) {
-        const treeBedMask = Math.pow(Math.max(0, 1 - minTreeDist / 1.55), 1.35);
+      // Carved stone foundations under tower pedestals
+      if (pedDist < 1.05) {
+        const pedT = Math.min(1, Math.max(0, (1.05 - pedDist) / 0.28));
+        const pedSlab = mortarAO * (0.65 + stoneBlockBevel * 0.45) * (0.88 + (vCell - 0.5) * 0.24);
+        r = r * (1 - pedT) + cliffRock[0] * pedSlab * pedT;
+        g = g * (1 - pedT) + cliffRock[1] * pedSlab * pedT;
+        b = b * (1 - pedT) + cliffRock[2] * pedSlab * pedT;
+        bumpHeight = bumpHeight * (1 - pedT) + (0.35 + stoneBlockBevel * 0.55) * pedT;
+      }
+
+      // Organic root-bed soil & dark humus underneath tree groves
+      if (minTreeDist < 1.6) {
+        const treeBedMask = Math.pow(Math.max(0, 1 - minTreeDist / 1.6), 1.35);
         const rootRadial = Math.pow(
           Math.max(0, Math.cos(Math.atan2(wz, wx) * 7 + fbmMicro * 4.5)),
           4.0
         );
-        const soilR = forestHumus[0] + rootRadial * 38;
-        const soilG = forestHumus[1] + rootRadial * 28 + (1 - treeBedMask) * 18;
-        const soilB = forestHumus[2] + rootRadial * 42;
-        r = r * (1 - treeBedMask * 0.85) + soilR * (treeBedMask * 0.85);
-        g = g * (1 - treeBedMask * 0.85) + soilG * (treeBedMask * 0.85);
-        b = b * (1 - treeBedMask * 0.85) + soilB * (treeBedMask * 0.85);
+        const soilR = forestHumus[0] + rootRadial * 32;
+        const soilG = forestHumus[1] + rootRadial * 24 + (1 - treeBedMask) * 14;
+        const soilB = forestHumus[2] + rootRadial * 36;
+        r = r * (1 - treeBedMask * 0.88) + soilR * (treeBedMask * 0.88);
+        g = g * (1 - treeBedMask * 0.88) + soilG * (treeBedMask * 0.88);
+        b = b * (1 - treeBedMask * 0.88) + soilB * (treeBedMask * 0.88);
         bumpHeight =
           bumpHeight * (1 - treeBedMask * 0.6) +
-          (0.28 + rootRadial * 0.45 + fbmFine * 0.2) * (treeBedMask * 0.6);
+          (0.24 + rootRadial * 0.4 + fbmFine * 0.2) * (treeBedMask * 0.6);
       }
 
       // Stratified cliff rock on outer valley slopes
       if (cliffFactor > 0.01) {
         const strata = 0.5 + 0.5 * Math.sin(wx * 1.5 + wz * 1.3 + fbmMacro * 6.5);
-        const rockVal = mortarAO * (0.42 + stoneBlockBevel * 0.52 + strata * 0.28);
+        const rockVal = mortarAO * (0.46 + stoneBlockBevel * 0.5 + strata * 0.28);
         r = r * (1 - cliffFactor) + cliffRock[0] * rockVal * cliffFactor;
         g = g * (1 - cliffFactor) + cliffRock[1] * rockVal * cliffFactor;
         b = b * (1 - cliffFactor) + cliffRock[2] * rockVal * cliffFactor;
@@ -7575,19 +7602,33 @@ function createValleyTerrainTexturesPair(
       if (riverWorldX !== null) {
         const meanderX = riverWorldX + Math.sin((wz / worldDepth) * Math.PI * 2.5 - 0.6) * 0.45;
         const rDist = Math.abs(wx - meanderX);
-        if (rDist < 1.85) {
-          const bankT = Math.max(0, 1 - rDist / 1.85);
-          const wetRock = mortarAO * (0.34 + stoneBlockBevel * 0.52);
-          r = r * (1 - bankT) + 26 * wetRock * bankT;
-          g = g * (1 - bankT) + 52 * wetRock * bankT;
-          b = b * (1 - bankT) + 76 * wetRock * bankT;
-          bumpHeight = bumpHeight * (1 - bankT) + stoneBlockBevel * 0.45 * bankT;
+        if (rDist < 1.9) {
+          const bankT = Math.max(0, 1 - rDist / 1.9);
+          const wetRock = mortarAO * (0.38 + stoneBlockBevel * 0.52);
+          const wetR = 30 * wetRock;
+          const wetG = 65 * wetRock;
+          const wetB = 90 * wetRock;
+          r = r * (1 - bankT) + wetR * bankT;
+          g = g * (1 - bankT) + wetG * bankT;
+          b = b * (1 - bankT) + wetB * bankT;
+          bumpHeight = bumpHeight * (1 - bankT) + stoneBlockBevel * 0.5 * bankT;
         }
+      }
+
+      // Road dirt shoulder transition (between roadDist 0.82 and 1.35)
+      if (roadDist < 1.35 && roadDist >= 0.82) {
+        const shoulderT = Math.sin(((roadDist - 0.82) / 0.53) * Math.PI);
+        const dirtR = 48 + fbmMicro * 14;
+        const dirtG = 44 + fbmMicro * 10;
+        const dirtB = 34 + fbmMicro * 8;
+        r = r * (1 - shoulderT * 0.48) + dirtR * (shoulderT * 0.48);
+        g = g * (1 - shoulderT * 0.48) + dirtG * (shoulderT * 0.48);
+        b = b * (1 - shoulderT * 0.48) + dirtB * (shoulderT * 0.48);
       }
 
       // 7. Carved Voronoi Obsidian & Ancient-Stone Flagstone Roadway along staticPaths
       if (roadDist < 1.24) {
-        const roadCoreT = Math.min(1, Math.max(0, (1.14 - roadDist) / 0.36));
+        const roadCoreT = Math.min(1, Math.max(0, (1.18 - roadDist) / 0.32));
         const curbRimMask = Math.exp(-Math.pow((roadDist - 0.84) / 0.13, 2));
 
         // High-definition chiseled Voronoi pavers on the roadbed
@@ -7608,30 +7649,30 @@ function createValleyTerrainTexturesPair(
         const microGrain = (fbmFine - 0.5) * 22;
         let pr =
           (roadStoneB[0] * (1 - blockTint) + roadStoneA[0] * blockTint) *
-            (0.24 + paverRelief * 0.88) +
+            (0.28 + paverRelief * 0.88) +
           microGrain * paverMortar;
         let pg =
           (roadStoneB[1] * (1 - blockTint) + roadStoneA[1] * blockTint) *
-            (0.24 + paverRelief * 0.88) +
+            (0.28 + paverRelief * 0.88) +
           microGrain * paverMortar;
         let pb =
           (roadStoneB[2] * (1 - blockTint) + roadStoneA[2] * blockTint) *
-            (0.24 + paverRelief * 0.88) +
+            (0.28 + paverRelief * 0.88) +
           microGrain * paverMortar;
 
         // Glowing Arcane-Gold & Void-Purple mortar veins in the stone crevices
         const mortarCrackMask = Math.max(0, 1 - paverMortar * 2.4);
         const portalProximity = Math.max(0.35, Math.exp(-minPortalDist / 8.5));
-        const veinGlow = mortarCrackMask * portalProximity * (0.65 + 0.45 * fbmMacro);
+        const veinGlow = mortarCrackMask * portalProximity * (0.75 + 0.45 * fbmMacro);
         const isVioletVein = rCell > 0.5;
-        pr += (isVioletVein ? voidViolet[0] : leyGold[0]) * veinGlow * 1.05;
-        pg += (isVioletVein ? voidViolet[1] : leyGold[1]) * veinGlow * 1.05;
-        pb += (isVioletVein ? voidViolet[2] : leyGold[2]) * veinGlow * 1.05;
+        pr += (isVioletVein ? voidViolet[0] : leyGold[0]) * veinGlow * 1.15;
+        pg += (isVioletVein ? voidViolet[1] : leyGold[1]) * veinGlow * 1.15;
+        pb += (isVioletVein ? voidViolet[2] : leyGold[2]) * veinGlow * 1.15;
 
         // Chiseled stone curb border highlight
-        pr += curbRimMask * 34 * paverMortar;
-        pg += curbRimMask * 30 * paverMortar;
-        pb += curbRimMask * 40 * paverMortar;
+        pr += curbRimMask * 38 * paverMortar;
+        pg += curbRimMask * 34 * paverMortar;
+        pb += curbRimMask * 44 * paverMortar;
 
         r = r * (1 - roadCoreT) + pr * roadCoreT;
         g = g * (1 - roadCoreT) + pg * roadCoreT;
@@ -7735,9 +7776,118 @@ export function buildSculptedValleyTerrainMesh(
   terrainMesh.receiveShadow = true;
   group.add(terrainMesh);
 
+/**
+ * Procedural animated water texture pair for the valley river:
+ * flowing wave crests, crystalline caustics, and foamy banks.
+ */
+function createRiverWaterTexturesPair(
+  maxAnisotropy: number
+): { waterMap: THREE.CanvasTexture; waterBump: THREE.CanvasTexture } {
+  const cacheKeyMap = `river_water_map_v2_${maxAnisotropy}`;
+  const cacheKeyBump = `river_water_bump_v2_${maxAnisotropy}`;
+  if (textureCache.has(cacheKeyMap) && textureCache.has(cacheKeyBump)) {
+    return {
+      waterMap: textureCache.get(cacheKeyMap)!,
+      waterBump: textureCache.get(cacheKeyBump)!,
+    };
+  }
+
+  const w = 256;
+  const h = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  const img = ctx.createImageData(w, h);
+  const data = img.data;
+
+  const bumpCanvas = document.createElement('canvas');
+  bumpCanvas.width = w;
+  bumpCanvas.height = h;
+  const bumpCtx = bumpCanvas.getContext('2d')!;
+  const bumpImg = bumpCtx.createImageData(w, h);
+  const bData = bumpImg.data;
+
+  for (let py = 0; py < h; py++) {
+    const v = py / h;
+    for (let px = 0; px < w; px++) {
+      const u = px / w;
+      const distFromCenter = Math.abs(u - 0.5) * 2; // 0 in center, 1 at banks
+
+      // Layered waves and flowing caustics
+      const n1 = fbm2(u * 10.0 + 1.2, v * 16.0 + 3.4, 3);
+      const n2 = fbm2(u * 22.0 + 5.1, v * 30.0 + 7.2, 2);
+      const wave = Math.sin(v * 32.0 + n1 * 4.5 + Math.sin(u * 12.0) * 1.5) * 0.5 + 0.5;
+      const caustic = Math.pow(Math.sin((u + v * 0.6) * 24.0 + n2 * 3.2) * 0.5 + 0.5, 3.2);
+
+      // Bank foam: soft white froth along river banks
+      const foamEdge = Math.max(0, (distFromCenter - 0.68) / 0.32);
+      const foamNoise = fbm2(u * 28.0, v * 24.0, 3);
+      const foam = Math.min(1, Math.pow(foamEdge, 1.3) * (0.55 + foamNoise * 0.75) + (wave > 0.85 ? 0.3 : 0));
+
+      // Color gradient: deep sapphire in center, turquoise near edges, white on foam
+      const deepR = 8, deepG = 84, deepB = 152;
+      const shallowR = 14, shallowG = 175, shallowB = 240;
+      const foamR = 230, foamG = 248, foamB = 255;
+
+      let r = deepR * (1 - distFromCenter * 0.55) + shallowR * (distFromCenter * 0.55);
+      let g = deepG * (1 - distFromCenter * 0.55) + shallowG * (distFromCenter * 0.55);
+      let b = deepB * (1 - distFromCenter * 0.55) + shallowB * (distFromCenter * 0.55);
+
+      // Add caustics highlight
+      r += caustic * 40;
+      g += caustic * 65;
+      b += caustic * 80;
+
+      // Add foam
+      r = r * (1 - foam) + foamR * foam;
+      g = g * (1 - foam) + foamG * foam;
+      b = b * (1 - foam) + foamB * foam;
+
+      const idx = (py * w + px) * 4;
+      data[idx] = Math.min(255, Math.max(0, Math.floor(r)));
+      data[idx + 1] = Math.min(255, Math.max(0, Math.floor(g)));
+      data[idx + 2] = Math.min(255, Math.max(0, Math.floor(b)));
+      data[idx + 3] = 255;
+
+      const bumpVal = Math.min(
+        255,
+        Math.max(0, Math.floor((wave * 0.52 + caustic * 0.28 + foam * 0.48) * 255))
+      );
+      bData[idx] = bumpVal;
+      bData[idx + 1] = bumpVal;
+      bData[idx + 2] = bumpVal;
+      bData[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(img, 0, 0);
+  bumpCtx.putImageData(bumpImg, 0, 0);
+
+  const waterMap = new THREE.CanvasTexture(canvas);
+  waterMap.colorSpace = THREE.SRGBColorSpace;
+  waterMap.wrapS = THREE.RepeatWrapping;
+  waterMap.wrapT = THREE.RepeatWrapping;
+  waterMap.repeat.set(1, 4);
+  waterMap.anisotropy = maxAnisotropy;
+  waterMap.needsUpdate = true;
+
+  const waterBump = new THREE.CanvasTexture(bumpCanvas);
+  waterBump.wrapS = THREE.RepeatWrapping;
+  waterBump.wrapT = THREE.RepeatWrapping;
+  waterBump.repeat.set(1, 4);
+  waterBump.anisotropy = maxAnisotropy;
+  waterBump.needsUpdate = true;
+
+  textureCache.set(cacheKeyMap, waterMap);
+  textureCache.set(cacheKeyBump, waterBump);
+
+  return { waterMap, waterBump };
+}
+
   // Shimmering 3D river water plane with normal/bump ripple micro-relief
   if (riverWorldX !== null) {
-    const waterGeo = new THREE.PlaneGeometry(3.1, worldDepth * 1.45, 24, 64);
+    const waterGeo = new THREE.PlaneGeometry(3.3, worldDepth * 1.45, 24, 64);
     waterGeo.rotateX(-Math.PI / 2);
     const wPos = waterGeo.getAttribute('position') as THREE.BufferAttribute;
     for (let i = 0; i < wPos.count; i++) {
@@ -7748,21 +7898,25 @@ export function buildSculptedValleyTerrainMesh(
     }
     waterGeo.computeVertexNormals();
 
+    const { waterMap, waterBump } = createRiverWaterTexturesPair(maxAnisotropy);
+
     const waterMat = new THREE.MeshPhysicalMaterial({
-      color: 0x0284c7,
-      emissive: 0x075985,
-      emissiveIntensity: 0.38,
-      bumpMap: getMonsterMicroBumpTexture(),
-      bumpScale: 0.045,
-      roughness: 0.08,
-      metalness: 0.55,
+      color: 0x38bdf8,
+      emissive: 0x0369a1,
+      emissiveIntensity: 0.35,
+      map: waterMap,
+      bumpMap: waterBump,
+      bumpScale: 0.08,
+      roughness: 0.1,
+      metalness: 0.15,
       clearcoat: 1.0,
-      clearcoatRoughness: 0.06,
+      clearcoatRoughness: 0.04,
       transparent: true,
-      opacity: 0.88,
+      opacity: 0.92,
     });
     const waterMesh = new THREE.Mesh(waterGeo, waterMat);
-    waterMesh.position.set(riverWorldX, -0.18, -3.5);
+    waterMesh.name = 'riverWaterMesh';
+    waterMesh.position.set(riverWorldX, -0.16, -3.5);
     waterMesh.receiveShadow = true;
     group.add(waterMesh);
   }
