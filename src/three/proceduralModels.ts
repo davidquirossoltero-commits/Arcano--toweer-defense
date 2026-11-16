@@ -2920,22 +2920,22 @@ function applyCosmeticMasterySkinToTowerModel(
         const isBrightCore = m.color.r > 0.82 && m.color.g > 0.82 && m.color.b > 0.82;
         m.color.copy(isBrightCore ? secondaryGlow : primaryGlow);
         m.emissive.copy(isBrightCore ? secondaryGlow : primaryGlow);
-        m.emissiveIntensity = Math.max(m.emissiveIntensity, 1.55 + skinSpec.tier * 0.22);
+        m.emissiveIntensity = Math.max(m.emissiveIntensity, 1.85 + skinSpec.tier * 0.28);
       } else if (m.metalness >= 0.58) {
         m.color.copy(metalColor);
         m.emissive.copy(primaryGlow);
-        m.emissiveIntensity = 0.34 + skinSpec.tier * 0.1;
+        m.emissiveIntensity = 0.25 + skinSpec.tier * 0.08;
         m.roughness = Math.min(m.roughness, 0.18);
         m.metalness = 0.92;
       } else {
-        m.color.copy(vibrantStoneColor);
+        m.color.copy(stoneColor);
         m.map = skinArmorTex;
         m.bumpMap = bumpTex;
-        m.bumpScale = 0.06;
+        m.bumpScale = 0.08;
         m.emissive.copy(primaryGlow);
-        m.emissiveIntensity = 0.22 + skinSpec.tier * 0.08;
-        m.roughness = 0.48;
-        m.metalness = 0.35;
+        m.emissiveIntensity = 0.04;
+        m.roughness = 0.65;
+        m.metalness = 0.25;
         m.needsUpdate = true;
       }
     } else if (m instanceof THREE.MeshBasicMaterial) {

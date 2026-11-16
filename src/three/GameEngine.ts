@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import {
   ACHIEVEMENTS,
   ALL_TOWERS,
@@ -206,6 +210,8 @@ export class GameEngine {
   private hemiLight: THREE.HemisphereLight | null = null;
   private keyLight: THREE.DirectionalLight | null = null;
   private riverWaterMesh: THREE.Mesh | null = null;
+  private composer: EffectComposer | null = null;
+  private bloomPass: UnrealBloomPass | null = null;
   private autoWeatherTimer: number = 26.0;
 
   // Wave Spawning Queue
@@ -352,12 +358,48 @@ export class GameEngine {
     this.loadMap(MAPS[0].id, true);
     this.bindEvents();
 
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
+    this.setupPostProcessing(width, height);
+
     if (!this.isSoftwareGl) {
       this.renderer.compile(this.scene, this.camera);
     }
 
     this.emitState();
     this.startLoop();
+  }
+
+  private setupPostProcessing(width: number, height: number) {
+    if (this.isSoftwareGl) return;
+
+    try {
+      const renderPass = new RenderPass(this.scene, this.camera);
+
+      // UnrealBloomPass: strength: 0.82, radius: 0.45, threshold: 0.84
+      // threshold: 0.84 ensures only bright emissive elements (crystals, lasers, void portals, spells) bloom
+      const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(width, height),
+        0.82,
+        0.45,
+        0.84
+      );
+      this.bloomPass = bloomPass;
+
+      const outputPass = new OutputPass();
+
+      const composer = new EffectComposer(this.renderer);
+      composer.setPixelRatio(this.renderer.getPixelRatio());
+      composer.addPass(renderPass);
+      composer.addPass(bloomPass);
+      composer.addPass(outputPass);
+
+      this.composer = composer;
+    } catch (err) {
+      console.warn('Failed to initialize EffectComposer postprocessing, falling back to standard renderer:', err);
+      this.composer = null;
+      this.bloomPass = null;
+    }
   }
 
   private setupLighting() {
@@ -761,6 +803,9 @@ export class GameEngine {
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(w, h);
+      if (this.composer) {
+        this.composer.setSize(w, h);
+      }
       this.decalSystem.setResolution(w, h);
     };
 
@@ -3541,7 +3586,12 @@ export class GameEngine {
 
       this.updateSimulation(dt);
       this.updateVisualEffects(dt);
-      this.renderer.render(this.scene, this.camera);
+
+      if (this.composer && !this.isSoftwareGl) {
+        this.composer.render();
+      } else {
+        this.renderer.render(this.scene, this.camera);
+      }
 
       if (this.isSoftwareGl) {
         this.afterDraw(tick);
@@ -3559,6 +3609,10 @@ export class GameEngine {
     clearTimeout(this.frameId);
     window.clearTimeout(this.bannerTimeout);
     window.clearTimeout(this.achievementToastTimeout);
+    if (this.composer) {
+      this.composer.dispose();
+      this.composer = null;
+    }
     this.particleSystem.dispose();
     this.decalSystem.dispose();
     this.weatherSystem.dispose();
