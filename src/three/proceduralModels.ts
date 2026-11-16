@@ -2920,7 +2920,7 @@ function applyCosmeticMasterySkinToTowerModel(
         const isBrightCore = m.color.r > 0.82 && m.color.g > 0.82 && m.color.b > 0.82;
         m.color.copy(isBrightCore ? secondaryGlow : primaryGlow);
         m.emissive.copy(isBrightCore ? secondaryGlow : primaryGlow);
-        m.emissiveIntensity = Math.max(m.emissiveIntensity, 1.85 + skinSpec.tier * 0.28);
+        m.emissiveIntensity = Math.min(1.25, Math.max(m.emissiveIntensity, 1.1 + skinSpec.tier * 0.08));
       } else if (m.metalness >= 0.58) {
         m.color.copy(metalColor);
         m.emissive.copy(primaryGlow);
@@ -7901,18 +7901,18 @@ function createRiverWaterTexturesPair(
     const { waterMap, waterBump } = createRiverWaterTexturesPair(maxAnisotropy);
 
     const waterMat = new THREE.MeshPhysicalMaterial({
-      color: 0x38bdf8,
-      emissive: 0x0369a1,
-      emissiveIntensity: 0.35,
+      color: 0x0284c7,
+      emissive: 0x012a4a,
+      emissiveIntensity: 0.06,
       map: waterMap,
       bumpMap: waterBump,
-      bumpScale: 0.08,
-      roughness: 0.1,
-      metalness: 0.15,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.04,
+      bumpScale: 0.06,
+      roughness: 0.25,
+      metalness: 0.1,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.1,
       transparent: true,
-      opacity: 0.92,
+      opacity: 0.88,
     });
     const waterMesh = new THREE.Mesh(waterGeo, waterMat);
     waterMesh.name = 'riverWaterMesh';

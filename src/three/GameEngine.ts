@@ -376,13 +376,14 @@ export class GameEngine {
     try {
       const renderPass = new RenderPass(this.scene, this.camera);
 
-      // UnrealBloomPass: strength: 0.82, radius: 0.45, threshold: 0.84
-      // threshold: 0.84 ensures only bright emissive elements (crystals, lasers, void portals, spells) bloom
+      // Subtle, elegant bloom strictly for high-emissive magic cores and spells
+      // threshold: 1.02 ensures terrain, trees, water and normal stone never bloom
+      // strength: 0.28 provides a soft, atmospheric aura without blinding glare
       const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(width, height),
-        0.82,
-        0.45,
-        0.84
+        0.28,
+        0.25,
+        1.02
       );
       this.bloomPass = bloomPass;
 
@@ -403,12 +404,12 @@ export class GameEngine {
   }
 
   private setupLighting() {
-    const hemiLight = new THREE.HemisphereLight(0xfde68a, 0x1e293b, 0.88);
+    const hemiLight = new THREE.HemisphereLight(0xfde68a, 0x1e293b, 0.65);
     hemiLight.position.set(0, 42, 0);
     this.scene.add(hemiLight);
     this.hemiLight = hemiLight;
 
-    const keyLight = new THREE.DirectionalLight(0xffedd5, 2.35);
+    const keyLight = new THREE.DirectionalLight(0xffedd5, 1.25);
     keyLight.position.set(-14, 26, -18);
     keyLight.castShadow = !this.isSoftwareGl;
     const d = 24;
@@ -425,11 +426,11 @@ export class GameEngine {
     this.scene.add(keyLight);
     this.keyLight = keyLight;
 
-    const sunsetRimLight = new THREE.DirectionalLight(0xf97316, 1.05);
+    const sunsetRimLight = new THREE.DirectionalLight(0xf97316, 0.55);
     sunsetRimLight.position.set(0, 14, -28);
     this.scene.add(sunsetRimLight);
 
-    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.65);
+    const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.4);
     fillLight.position.set(18, 16, 16);
     this.scene.add(fillLight);
   }
