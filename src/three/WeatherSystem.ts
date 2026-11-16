@@ -306,10 +306,10 @@ export class WeatherSystem {
 
     if (keyLight) {
       keyLight.color.copy(this.currentLightColor);
-      keyLight.intensity = 2.1 * this.currentLightIntensityMult + this.lightningFlashIntensity;
+      keyLight.intensity = 1.15 * this.currentLightIntensityMult + this.lightningFlashIntensity;
     }
     if (hemiLight) {
-      hemiLight.intensity = 0.75 * this.currentLightIntensityMult + this.lightningFlashIntensity * 0.4;
+      hemiLight.intensity = 0.55 * this.currentLightIntensityMult + this.lightningFlashIntensity * 0.4;
     }
 
     // 2. Animate Ground Volumetric Mist Planes (active during dense_fog & arcane_snow)

@@ -759,8 +759,8 @@ function buildFrostPillarModel(
   });
   const snowMat = new THREE.MeshStandardMaterial({
     color: 0xf1f5f9,
-    emissive: 0xbae6fd,
-    emissiveIntensity: 0.12,
+    emissive: 0x000000,
+    emissiveIntensity: 0.0,
     roughness: 0.9,
     metalness: 0.02,
   });
@@ -768,8 +768,8 @@ function buildFrostPillarModel(
   const iceShardMat = new THREE.MeshPhysicalMaterial({
     color: 0x7dd3fc,
     emissive: 0x0284c7,
-    emissiveIntensity: isSuper ? 0.62 : 0.45,
-    roughness: 0.1,
+    emissiveIntensity: isSuper ? 0.22 : 0.15,
+    roughness: 0.12,
     metalness: 0.08,
     transmission: isSoftwareGl ? 0 : 0.68,
     transparent: true,
@@ -781,23 +781,23 @@ function buildFrostPillarModel(
   const iceBrightCoreMat = new THREE.MeshStandardMaterial({
     color: 0xe0f2fe,
     emissive: 0x38bdf8,
-    emissiveIntensity: isSuper ? 1.55 : 1.25,
-    roughness: 0.12,
+    emissiveIntensity: isSuper ? 0.48 : 0.38,
+    roughness: 0.18,
     metalness: 0.15,
   });
 
   const runeVioletMat = new THREE.MeshStandardMaterial({
     color: 0xd8b4fe,
     emissive: 0xa855f7,
-    emissiveIntensity: 1.15,
-    roughness: 0.2,
+    emissiveIntensity: 0.32,
+    roughness: 0.25,
   });
 
   const runeCyanMat = new THREE.MeshStandardMaterial({
     color: 0x67e8f9,
     emissive: 0x06b6d4,
-    emissiveIntensity: 1.2,
-    roughness: 0.2,
+    emissiveIntensity: 0.32,
+    roughness: 0.25,
   });
 
   // ==========================================================================
@@ -1494,27 +1494,27 @@ function buildMagmaVolcanicTowerModel(
   const volcanicAshMat = new THREE.MeshStandardMaterial({
     color: 0x3f3a45,
     emissive: 0x7c2d12,
-    emissiveIntensity: 0.18,
+    emissiveIntensity: 0.05,
     roughness: 0.92,
   });
 
   const magmaOrangeMat = new THREE.MeshStandardMaterial({
     color: 0xf97316,
     emissive: 0xea580c,
-    emissiveIntensity: isSuper ? 1.45 : 1.2,
-    roughness: 0.18,
+    emissiveIntensity: isSuper ? 0.45 : 0.35,
+    roughness: 0.22,
   });
   const emberRedMat = new THREE.MeshStandardMaterial({
     color: 0xef4444,
     emissive: 0xdc2626,
-    emissiveIntensity: 1.15,
-    roughness: 0.22,
+    emissiveIntensity: 0.32,
+    roughness: 0.25,
   });
   const blazeYellowMat = new THREE.MeshStandardMaterial({
     color: 0xfef08a,
     emissive: 0xfacc15,
-    emissiveIntensity: isSuper ? 1.75 : 1.45,
-    roughness: 0.12,
+    emissiveIntensity: isSuper ? 0.48 : 0.38,
+    roughness: 0.18,
   });
 
   // ==========================================================================
@@ -2252,7 +2252,7 @@ function buildQuartzVoidSpireModel(
   const arcaneCopperGoldMat = new THREE.MeshPhysicalMaterial({
     color: 0xd97706,
     emissive: 0x78350f,
-    emissiveIntensity: 0.28,
+    emissiveIntensity: 0.08,
     roughness: 0.24,
     metalness: 0.9,
     clearcoat: 0.65,
@@ -2260,28 +2260,28 @@ function buildQuartzVoidSpireModel(
   const brightGoldTrimMat = new THREE.MeshStandardMaterial({
     color: 0xfbbf24,
     emissive: 0xd97706,
-    emissiveIntensity: 0.75,
+    emissiveIntensity: 0.12,
     roughness: 0.2,
     metalness: 0.88,
   });
   const voidPurpleMat = new THREE.MeshStandardMaterial({
     color: 0xc084fc,
     emissive: 0x9333ea,
-    emissiveIntensity: isSuper ? 1.7 : 1.4,
-    roughness: 0.14,
+    emissiveIntensity: isSuper ? 0.45 : 0.35,
+    roughness: 0.22,
   });
   const crystalShardLavenderMat = new THREE.MeshStandardMaterial({
     color: 0xf3e8ff,
     emissive: 0xa855f7,
-    emissiveIntensity: isSuper ? 1.85 : 1.55,
-    roughness: 0.1,
+    emissiveIntensity: isSuper ? 0.48 : 0.38,
+    roughness: 0.18,
     metalness: 0.2,
   });
   const voidCyanCoreMat = new THREE.MeshStandardMaterial({
     color: 0xe0f2fe,
     emissive: 0x38bdf8,
-    emissiveIntensity: 1.5,
-    roughness: 0.12,
+    emissiveIntensity: 0.45,
+    roughness: 0.15,
   });
   const shadowSmokeMat = new THREE.MeshBasicMaterial({
     color: 0x1e1b2e,
@@ -2915,27 +2915,39 @@ function applyCosmeticMasterySkinToTowerModel(
     if (clonedMats.has(mat)) return clonedMats.get(mat)!;
     const m = mat.clone();
 
-    if (m instanceof THREE.MeshStandardMaterial) {
-      if (m.emissiveIntensity >= 0.45) {
+    if (m instanceof THREE.MeshPhysicalMaterial && (m.transmission > 0 || m.transparent)) {
+      // Translucent ice crystals, gems, and lenses: retain faceted refraction with soft inner glow
+      m.color.copy(primaryGlow).lerp(new THREE.Color(0xffffff), 0.35);
+      m.emissive.copy(primaryGlow);
+      m.emissiveIntensity = 0.16 + skinSpec.tier * 0.04;
+      m.roughness = 0.12;
+      m.metalness = 0.08;
+      m.clearcoat = 1.0;
+    } else if (m instanceof THREE.MeshStandardMaterial) {
+      if (m.emissiveIntensity >= 0.35) {
+        // Glowing magic runes, arcane cores, and magma channels
         const isBrightCore = m.color.r > 0.82 && m.color.g > 0.82 && m.color.b > 0.82;
         m.color.copy(isBrightCore ? secondaryGlow : primaryGlow);
         m.emissive.copy(isBrightCore ? secondaryGlow : primaryGlow);
-        m.emissiveIntensity = Math.min(1.25, Math.max(m.emissiveIntensity, 1.1 + skinSpec.tier * 0.08));
+        m.emissiveIntensity = 0.40 + skinSpec.tier * 0.05;
+        m.roughness = 0.22;
       } else if (m.metalness >= 0.58) {
+        // Polished architectural metal trims, bands, and collars
         m.color.copy(metalColor);
         m.emissive.copy(primaryGlow);
-        m.emissiveIntensity = 0.25 + skinSpec.tier * 0.08;
-        m.roughness = Math.min(m.roughness, 0.18);
-        m.metalness = 0.92;
+        m.emissiveIntensity = 0.08;
+        m.roughness = Math.min(m.roughness, 0.22);
+        m.metalness = 0.90;
       } else {
+        // Solid carved stone masonry: keep dark, high-contrast, matte stone with ZERO emission
         m.color.copy(stoneColor);
         m.map = skinArmorTex;
         m.bumpMap = bumpTex;
         m.bumpScale = 0.08;
-        m.emissive.copy(primaryGlow);
-        m.emissiveIntensity = 0.04;
-        m.roughness = 0.65;
-        m.metalness = 0.25;
+        m.emissive.setHex(0x000000);
+        m.emissiveIntensity = 0.0;
+        m.roughness = 0.78;
+        m.metalness = 0.18;
         m.needsUpdate = true;
       }
     } else if (m instanceof THREE.MeshBasicMaterial) {
@@ -2973,35 +2985,35 @@ function applyCosmeticMasterySkinToTowerModel(
   const regaliaGlowMat = new THREE.MeshStandardMaterial({
     color: secondaryGlow,
     emissive: primaryGlow,
-    emissiveIntensity: 1.95,
-    roughness: 0.1,
+    emissiveIntensity: 0.42,
+    roughness: 0.15,
     metalness: 0.25,
   });
 
   const regaliaSecondaryGlowMat = new THREE.MeshStandardMaterial({
     color: primaryGlow,
     emissive: secondaryGlow,
-    emissiveIntensity: 1.75,
-    roughness: 0.12,
+    emissiveIntensity: 0.38,
+    roughness: 0.18,
     metalness: 0.3,
   });
 
   const regaliaMetalMat = new THREE.MeshPhysicalMaterial({
     color: metalColor,
     emissive: primaryGlow,
-    emissiveIntensity: 0.42,
-    roughness: 0.15,
+    emissiveIntensity: 0.08,
+    roughness: 0.2,
     metalness: 0.94,
-    clearcoat: 0.9,
+    clearcoat: 0.7,
   });
 
   const regaliaArmorMat = new THREE.MeshStandardMaterial({
-    color: vibrantStoneColor,
+    color: stoneColor,
     map: skinArmorTex,
-    emissive: primaryGlow,
-    emissiveIntensity: 0.32,
-    roughness: 0.38,
-    metalness: 0.48,
+    emissive: new THREE.Color(0x000000),
+    emissiveIntensity: 0.0,
+    roughness: 0.75,
+    metalness: 0.2,
   });
 
   // 1. TIER 1+ BASE ARCHITECTURAL PYLONS: 4 Corner Runic Sentinel Obelisks around the base
@@ -3263,8 +3275,8 @@ export function buildTowerModel(
   const accentGlowMat = new THREE.MeshStandardMaterial({
     color: new THREE.Color(accentColorHex),
     emissive: new THREE.Color(accentColorHex),
-    emissiveIntensity: 0.85,
-    roughness: 0.18,
+    emissiveIntensity: 0.35,
+    roughness: 0.22,
     metalness: 0.3,
   });
 
@@ -3759,8 +3771,8 @@ export function buildEnemyModel(kind: EnemyKind): THREE.Group {
     const voidRuneMat = new THREE.MeshStandardMaterial({
       color: 0xa855f7,
       emissive: 0x9333ea,
-      emissiveIntensity: 1.5,
-      roughness: 0.2,
+      emissiveIntensity: 0.45,
+      roughness: 0.25,
     });
 
     torso.position.y = 0.56;
@@ -5225,15 +5237,15 @@ export function buildVoidSpawnPortalModel(): THREE.Group {
   const voidPurpleCrystalMat = new THREE.MeshStandardMaterial({
     color: 0xd8b4fe,
     emissive: 0x9333ea,
-    emissiveIntensity: 1.65,
-    roughness: 0.12,
+    emissiveIntensity: 0.42,
+    roughness: 0.22,
     metalness: 0.2,
   });
   const magentaRuneMat = new THREE.MeshStandardMaterial({
     color: 0xf0abfc,
     emissive: 0xc026d3,
-    emissiveIntensity: 1.55,
-    roughness: 0.14,
+    emissiveIntensity: 0.38,
+    roughness: 0.22,
   });
   const lightningArcMat = new THREE.MeshBasicMaterial({
     color: 0xf5d0fe,
@@ -5786,22 +5798,22 @@ export function buildOctagonalTowerPedestalModel(isSubtleTerrace = false): THREE
     metalness: 0.28,
   });
   const topSlabMat = new THREE.MeshStandardMaterial({
-    color: 0x8b8499,
+    color: 0x3d374d,
     bumpMap: bumpTex,
     bumpScale: 0.06,
-    roughness: 0.68,
-    metalness: 0.2,
+    roughness: 0.85,
+    metalness: 0.15,
   });
   const runeGlowMat = new THREE.MeshStandardMaterial({
     color: 0x38bdf8,
     emissive: 0x0284c7,
-    emissiveIntensity: 0.65,
-    roughness: 0.25,
+    emissiveIntensity: 0.22,
+    roughness: 0.35,
   });
   const cyanFloraMat = new THREE.MeshStandardMaterial({
     color: 0x22d3ee,
     emissive: 0x06b6d4,
-    emissiveIntensity: 0.95,
+    emissiveIntensity: 0.28,
   });
 
   // 1. Stepped outer octagonal stone foundation sunk slightly into the terrain
@@ -5986,33 +5998,33 @@ function getRunicTreeMaterials() {
     goldenHeartGlow: new THREE.MeshStandardMaterial({
       color: 0xfde047,
       emissive: 0xf59e0b,
-      emissiveIntensity: 1.55,
-      roughness: 0.2,
+      emissiveIntensity: 0.35,
+      roughness: 0.3,
     }),
     magentaRuneGlow: new THREE.MeshStandardMaterial({
       color: 0xf0abfc,
       emissive: 0xc026d3,
-      emissiveIntensity: 1.65,
-      roughness: 0.15,
+      emissiveIntensity: 0.35,
+      roughness: 0.25,
     }),
     voidPurpleCrystal: new THREE.MeshStandardMaterial({
       color: 0xd8b4fe,
       emissive: 0x9333ea,
-      emissiveIntensity: 1.45,
-      roughness: 0.15,
+      emissiveIntensity: 0.30,
+      roughness: 0.25,
     }),
     frostCyanGlow: new THREE.MeshStandardMaterial({
       color: 0xbae6fd,
       emissive: 0x0284c7,
-      emissiveIntensity: 1.35,
-      roughness: 0.22,
+      emissiveIntensity: 0.30,
+      roughness: 0.28,
       metalness: 0.25,
     }),
     frostIceTip: new THREE.MeshStandardMaterial({
       color: 0xe0f2fe,
       emissive: 0x38bdf8,
-      emissiveIntensity: 1.7,
-      roughness: 0.12,
+      emissiveIntensity: 0.35,
+      roughness: 0.22,
     }),
     wispAuraMat: new THREE.MeshBasicMaterial({
       color: 0x9333ea,
@@ -6623,26 +6635,26 @@ export function buildCastleKeepGoalModel(): THREE.Group {
   const voidPurpleCrystalMat = new THREE.MeshStandardMaterial({
     color: 0xd8b4fe,
     emissive: 0x9333ea,
-    emissiveIntensity: 1.55,
-    roughness: 0.12,
+    emissiveIntensity: 0.42,
+    roughness: 0.22,
     metalness: 0.2,
   });
   const magentaRuneMat = new THREE.MeshStandardMaterial({
     color: 0xf0abfc,
     emissive: 0xc026d3,
-    emissiveIntensity: 1.45,
-    roughness: 0.15,
+    emissiveIntensity: 0.38,
+    roughness: 0.22,
   });
   const whiteVoidLensMat = new THREE.MeshStandardMaterial({
     color: 0xf5f3ff,
     emissive: 0xc084fc,
-    emissiveIntensity: 1.9,
-    roughness: 0.08,
+    emissiveIntensity: 0.48,
+    roughness: 0.18,
   });
   const gremlinCyanEyeMat = new THREE.MeshStandardMaterial({
     color: 0x67e8f9,
     emissive: 0x06b6d4,
-    emissiveIntensity: 1.6,
+    emissiveIntensity: 0.45,
   });
 
   // ============================================================================
@@ -7284,7 +7296,8 @@ export function buildStoneBridgeModel(): THREE.Group {
   const lanternGlowMat = new THREE.MeshStandardMaterial({
     color: 0xfde047,
     emissive: 0xf59e0b,
-    emissiveIntensity: 1.1,
+    emissiveIntensity: 0.35,
+    roughness: 0.3,
   });
 
   // Gently arched bridge roadway deck
@@ -8015,8 +8028,8 @@ export function buildValleyEnvironmentBackdrop(mapConfig: MapConfig): THREE.Grou
   const peakCrystalMat = new THREE.MeshStandardMaterial({
     color: 0xc084fc,
     emissive: 0x9333ea,
-    emissiveIntensity: 1.35,
-    roughness: 0.2,
+    emissiveIntensity: 0.35,
+    roughness: 0.25,
   });
 
   const mountainSpecs: Array<{ x: number; z: number; r: number; h: number }> = [
@@ -8136,25 +8149,25 @@ export function buildOrganicRoadRibbonAndChevrons(mapConfig: MapConfig): THREE.G
   chevronGeo.rotateX(-Math.PI / 2);
 
   const chevronRuneMat = new THREE.MeshStandardMaterial({
-    color: 0xd8b4fe,
-    emissive: 0xa855f7,
-    emissiveIntensity: 1.45,
-    roughness: 0.25,
-    metalness: 0.2,
+    color: 0x8b5cf6,
+    emissive: 0x4c1d95,
+    emissiveIntensity: 0.12,
+    roughness: 0.65,
+    metalness: 0.15,
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.75,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
 
   const chevronGoldMat = new THREE.MeshStandardMaterial({
-    color: 0xfde047,
-    emissive: 0xd97706,
-    emissiveIntensity: 1.25,
-    roughness: 0.3,
-    metalness: 0.65,
+    color: 0xd97706,
+    emissive: 0x78350f,
+    emissiveIntensity: 0.10,
+    roughness: 0.55,
+    metalness: 0.45,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.75,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -8250,7 +8263,7 @@ export function buildOrganicRoadRibbonAndChevrons(mapConfig: MapConfig): THREE.G
     }
 
     // 2. Place recessed Arcane-Gold & Void-Purple directional double-chevron (>>) runes along the road center
-    const chevronCount = Math.max(8, Math.floor(path.length * 0.65));
+    const chevronCount = Math.max(4, Math.floor(path.length * 0.22));
     for (let i = 1; i < chevronCount; i++) {
       const u = i / chevronCount;
       const pt = curve.getPointAt(u);
@@ -8258,16 +8271,17 @@ export function buildOrganicRoadRibbonAndChevrons(mapConfig: MapConfig): THREE.G
       const heading = Math.atan2(tan.z, tan.x);
 
       const pairGroup = new THREE.Group();
-      [-0.16, 0.16].forEach((offsetAlong, cIdx) => {
+      [-0.14, 0.14].forEach((offsetAlong, cIdx) => {
         const ch = new THREE.Mesh(
           chevronGeo,
           cIdx === 0 ? chevronRuneMat : chevronGoldMat
         );
+        ch.scale.set(0.82, 0.82, 0.82);
         ch.position.x = offsetAlong;
         pairGroup.add(ch);
       });
 
-      pairGroup.position.set(pt.x, 0.008, pt.z);
+      pairGroup.position.set(pt.x, 0.006, pt.z);
       pairGroup.rotation.y = -heading;
       group.add(pairGroup);
     }
